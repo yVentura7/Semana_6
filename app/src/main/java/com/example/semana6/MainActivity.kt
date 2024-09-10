@@ -3,37 +3,33 @@ package com.example.semana6
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Build
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.AccountCircle
+import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.rounded.Menu
 import androidx.compose.material.icons.rounded.Search
-import androidx.compose.material3.BottomAppBar
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.example.semana6.ui.theme.Semana6Theme
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         setContent {
             Semana6Theme {
                 CustomScaffold()
@@ -45,41 +41,47 @@ class MainActivity : ComponentActivity() {
 // Función Composable que crea un Scaffold personalizado
 @Composable
 fun CustomScaffold() {
+    val navController = rememberNavController()
+    var clickCount by remember { mutableIntStateOf(0) }
+
     Scaffold(
-        // Barra superior
-        topBar = { CustomTopBar() },
-
-        // Barra inferior
-        bottomBar = { CustomBottomBar() },
-
-        // Botón flotante personalizado
-        floatingActionButton = { CustomFAB() },
-
-        // Contenido principal
+        topBar = { CustomTopBar(navController) },
+        bottomBar = { CustomBottomBar(navController) },
+        floatingActionButton = { CustomFAB(clickCount) { clickCount++ } },
         content = { padding ->
-            CustomContent(padding)
+            NavHost(
+                navController = navController,
+                startDestination = "home"
+            ) {
+                composable("home") { CustomContent(padding, clickCount) }
+                composable("profile") { ProfileScreen() }
+                composable("settings") { SettingsScreen() }
+                composable("notifications") { NotificationsScreen() }
+            }
         }
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CustomTopBar() {
+fun CustomTopBar(navController: NavHostController) {
     TopAppBar(
         navigationIcon = {
-            IconButton(onClick = { /*TODO*/ }) {
+            IconButton(onClick = { /* TODO */ }) {
                 Icon(imageVector = Icons.Rounded.Menu, contentDescription = null)
             }
         },
         title = { Text(text = "Sample Title") },
         actions = {
-            IconButton(onClick = { /*TODO*/ }) {
+            IconButton(onClick = { /* TODO */ }) {
                 Icon(
                     imageVector = Icons.Rounded.Search,
                     contentDescription = null
                 )
             }
-            IconButton(onClick = { /*TODO*/ }) {
+            IconButton(onClick = {
+                navController.navigate("profile")
+            }) {
                 Icon(
                     imageVector = Icons.Outlined.AccountCircle,
                     contentDescription = null
@@ -90,58 +92,99 @@ fun CustomTopBar() {
 }
 
 @Composable
-fun CustomBottomBar() {
+fun CustomBottomBar(navController: NavHostController) {
     BottomAppBar {
-        IconButton(onClick = { print("Build") }) {
-            Icon(Icons.Filled.Build, contentDescription = "Build description")
-        }
-        IconButton(onClick = { print("Menu") }) {
-            Icon(
-                Icons.Filled.Menu,
-                contentDescription = "Menu description",
-            )
-        }
-        IconButton(onClick = { print("Favorite") }) {
-            Icon(
-                Icons.Filled.Favorite,
-                contentDescription = "Favorite description",
-            )
-        }
-        IconButton(onClick = { print("Delete") }) {
-            Icon(
-                Icons.Filled.Delete,
-                contentDescription = "Delete description",
-            )
+        Row(
+            modifier = Modifier.fillMaxSize() // Ocupar todo el espacio disponible
+        ) {
+            IconButton(
+                onClick = { navController.navigate("home") },
+                modifier = Modifier.weight(1f) // Cada botón toma el mismo espacio
+            ) {
+                Icon(Icons.Filled.Home, contentDescription = "Home")
+            }
+            IconButton(
+                onClick = { navController.navigate("settings") },
+                modifier = Modifier.weight(1f) // Cada botón toma el mismo espacio
+            ) {
+                Icon(Icons.Outlined.Settings, contentDescription = "Settings")
+            }
+            IconButton(
+                onClick = { navController.navigate("notifications") },
+                modifier = Modifier.weight(1f) // Cada botón toma el mismo espacio
+            ) {
+                Icon(Icons.Outlined.Notifications, contentDescription = "Notifications")
+            }
+            IconButton(
+                onClick = { navController.navigate("profile") },
+                modifier = Modifier.weight(1f) // Cada botón toma el mismo espacio
+            ) {
+                Icon(Icons.Outlined.AccountCircle, contentDescription = "Profile")
+            }
         }
     }
 }
 
+
 @Composable
-fun CustomFAB() {
-    FloatingActionButton(
-        // Color de fondo
-        //backgroundColor = MaterialTheme.colors.primary,
-        // Acción al hacer clic en el botón (sin definir)
-        onClick = { /*TODO*/ }) {
+fun CustomFAB(clickCount: Int, onClick: () -> Unit) {
+    FloatingActionButton(onClick = onClick) {
         Text(
-            fontSize = 24.sp, // Tamaño de fuente del texto del botón
-            text = "+" // Texto del botón
+            fontSize = 24.sp,
+            text = "+ $clickCount"
         )
     }
 }
 
 @Composable
-fun CustomContent(padding: PaddingValues) {
+fun CustomContent(padding: PaddingValues, clickCount: Int) {
     Column(
-        // Modificadores de estilo de la columna
         modifier = Modifier
-            // Ocupar todo el espacio disponible
             .fillMaxSize()
-            .padding(padding),
+            .padding(padding)
+    ) {
+        Text(text = "Ejemplo de funcionamiento")
+        Text(text = "Número de clics: $clickCount")
+    }
+}
 
-        // Contenido de la aplicación
-        content = {
-            Text(text = "My app content")
-        }
-    )
+@Composable
+fun ProfileScreen() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(text = "Perfil", style = MaterialTheme.typography.bodyLarge)
+    }
+}
+
+// Pantalla de ajustes
+@Composable
+fun SettingsScreen() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(text = "configuraciones", style = MaterialTheme.typography.bodyLarge)
+    }
+}
+
+// Pantalla de notificaciones
+@Composable
+fun NotificationsScreen() {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(text = "notificaciones", style = MaterialTheme.typography.bodyLarge)
+    }
 }
